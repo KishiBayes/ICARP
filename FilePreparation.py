@@ -67,27 +67,30 @@ def processEdf(fname):
 
     montage = mne.channels.make_standard_montage('standard_1020')
     mapping = mappingMaker(raw.ch_names)
-    print(mapping)
     submapping = {k:v for k,v in mapping.items() if k in raw.ch_names}
     exclude = [v for v in submapping.values() if v.startswith("E") or v.startswith("M")]
     raw.rename_channels(submapping)
+    #copy EMG leads and save as a seperate file
+    EMGraw = raw.copy().drop_channels([v for v in submapping.values() if not v.startswith("EMG")])
+    EMGraw.save(str(fname.path).split(".")[0] + "emgraw.fif", overwrite=True)
 
     raw.drop_channels(exclude)  # removing all channels not in montage
     raw.set_montage(montage)
 
     #Save unedited version as a fif
-    raw.save(str(fname.path).split(".")[0] + ".fif", overwrite=True)
+    raw.save(str(fname.path).split(".")[0] + "raw.fif", overwrite=True)
 
     n_comps = len(raw.ch_names)
-    icaraw = Auto_ICA(raw, n_comps)
+    icaraw = Auto_ICA(raw, n_comps, seed=69)
+
     #save ICA'd version as a fif
-    icaraw.save(str(fname.path).split(".")[0] + "ica.fif", overwrite=True)
+    icaraw.save(str(fname.path).split(".")[0] + "icaraw.fif", overwrite=True)
 
     return icaraw
 
 def Auto_ICA(raw, n_comp, seed=1123):
     filt_raw = raw.copy().filter(l_freq=1., h_freq=None)
-    ica = ICA(n_components=n_comp, max_iter='auto', random_state=seed)
+    ica = ICA(n_components=n_comp, max_iter='auto', random_state=seed, method="infomax")
     ica.fit(filt_raw)
 
     filt_raw.load_data()
@@ -135,9 +138,6 @@ RPDir = r"C:\Users\rohan\OneDrive - NHS\EEGs\BRP"
 TestDir = r"C:\Users\rohan\PycharmProjects\ICARP\TestDir"
 
 if __name__ == "__main__":
-    icafif = r"C:\Users\rohan\PycharmProjects\ICARP\TestDir\21227972ica.fif"
-    nfif = r"C:\Users\rohan\PycharmProjects\ICARP\TestDir\21227972.fif"
+    MainSortLoop(TestDir)
 
-    LoadAnnots(icafif)
-    LoadAnnots(nfif)
 

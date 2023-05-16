@@ -78,18 +78,18 @@ def processEdf(fname):
     raw.set_montage(montage)
 
     #Save unedited version as a fif
-    raw.save(str(fname.path).split(".")[0] + "raw.fif", overwrite=True)
+    raw.save(str(fname.path).split(".")[0] + "eegraw.fif", overwrite=True)
 
     n_comps = len(raw.ch_names)
     icaraw = Auto_ICA(raw, n_comps, seed=69)
 
     #save ICA'd version as a fif
-    icaraw.save(str(fname.path).split(".")[0] + "icaraw.fif", overwrite=True)
+    icaraw.save(str(fname.path).split(".")[0] + "eegica.fif", overwrite=True)
 
     return icaraw
 
 def Auto_ICA(raw, n_comp, seed=1123):
-    filt_raw = raw.copy().filter(l_freq=1., h_freq=None)
+    filt_raw = raw.copy().filter(l_freq=0.005, h_freq=50)
     ica = ICA(n_components=n_comp, max_iter='auto', random_state=seed, method="infomax")
     ica.fit(filt_raw)
 
